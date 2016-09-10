@@ -1,5 +1,7 @@
 # App itself
 /bluejay
+# current data file for the app
+/data.json
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
