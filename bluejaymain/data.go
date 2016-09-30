@@ -2,6 +2,7 @@ package bluejaymain
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -48,11 +49,33 @@ func addMark(m Mark) Mark {
 	allMarks := getAll()
 	m.ID = calculateNextId(allMarks)
 	allMarks = append(allMarks, m)
-
-	// persist data
-	jsonData, err := json.Marshal(allMarks)              //TODO check err with log level
-	err = ioutil.WriteFile(dataFileName, jsonData, 0600) //TODO should be err :=
-	check(err)
+	persistMarks(allMarks)
 
 	return m
+}
+
+func deleteMark(id int) error {
+	allMarks := getAll()
+
+	removed := false
+	// exclude the mark if exists
+	for i, m := range allMarks {
+		if m.ID == id {
+			allMarks = append(allMarks[:i], allMarks[i+1:]...)
+			removed = true
+		}
+	}
+	if !removed {
+		log.Printf("Bookrmark with id %d not found", id)
+		return errors.New("not found")
+	}
+	persistMarks(allMarks)
+
+	return nil
+}
+
+func persistMarks(marks Marks) {
+	jsonData, err := json.Marshal(marks)                 //TODO check err with log level
+	err = ioutil.WriteFile(dataFileName, jsonData, 0600) //TODO should be err :=
+	check(err)
 }

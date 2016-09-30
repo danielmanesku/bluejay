@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -68,10 +69,30 @@ func addSingleBookrmark(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func deleteSingleBookrmark(w http.ResponseWriter, r *http.Request) {
+	log.Println("Endpoint Hit: deleteSingleBookrmark")
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("id param must be a number")
+		return
+	}
+
+	log.Println("DELETE Request for:", id)
+	if err := deleteMark(id); err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func handleRequests() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/bookmarks", returnAllBookmarks).Methods("GET")
 	router.HandleFunc("/bookmark", addSingleBookrmark).Methods("POST")
+	router.HandleFunc("/bookmark/{id}", deleteSingleBookrmark).Methods("DELETE")
 	log.Println("Ready to accept connections")
 	log.Fatal(http.ListenAndServe("localhost:8081", router))
 }
