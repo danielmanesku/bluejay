@@ -25,12 +25,10 @@ func getAll() Marks {
 	var marks Marks
 	fileData, err := ioutil.ReadFile(dataFileName)
 	if err != nil {
-		// return make(Marks, 0), err
 		log.Fatal("Data file is supposed to exist. It should have been created in init func")
 	}
 	if err := json.Unmarshal(fileData, &marks); err != nil {
 		log.Fatal("Error: could not unmarshall data file to JSON") //TODO investigate proper logging
-		// return nil, err
 	}
 	return marks
 }
