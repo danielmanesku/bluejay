@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const dataFileName string = "data.json"
@@ -15,10 +16,14 @@ func init() {
 	_, err := os.Stat(dataFileName)
 	if err != nil {
 		if err = ioutil.WriteFile(dataFileName, []byte(`[]`), 0600); err != nil {
-			log.Fatal("File could not be written. Cannot continue.")
+			log.WithFields(log.Fields{
+				"file name": dataFileName,
+			}).Panic("File could not be written. Cannot continue.")
 		}
+		log.WithFields(log.Fields{
+			"file name": dataFileName,
+		}).Info("Data file did not exist and it was created")
 	}
-	log.Printf("%s did not exist and it was created", dataFileName)
 }
 
 func getAll() Marks {
@@ -28,7 +33,7 @@ func getAll() Marks {
 		log.Fatal("Data file is supposed to exist. It should have been created in init func")
 	}
 	if err := json.Unmarshal(fileData, &marks); err != nil {
-		log.Fatal("Error: could not unmarshall data file to JSON") //TODO investigate proper logging
+		log.Error("Could not unmarshall data file to JSON")
 	}
 	return marks
 }
@@ -64,7 +69,9 @@ func deleteMark(id int) error {
 		}
 	}
 	if !removed {
-		log.Printf("Bookrmark with id %d not found", id)
+		log.WithFields(log.Fields{
+			"id": id,
+		}).Info("Bookrmark not found")
 		return errors.New("not found")
 	}
 	persistMarks(allMarks)
@@ -73,7 +80,13 @@ func deleteMark(id int) error {
 }
 
 func persistMarks(marks Marks) {
-	jsonData, err := json.Marshal(marks)                 //TODO check err with log level
-	err = ioutil.WriteFile(dataFileName, jsonData, 0600) //TODO should be err :=
-	check(err)
+	jsonData, err := json.Marshal(marks)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"field": marks,
+		}).Error("Could not marshal data structure to JSON")
+	}
+	if err := ioutil.WriteFile(dataFileName, jsonData, 0600); err != nil {
+		log.Error("Could not persist data.")
+	}
 }
