@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -51,6 +52,7 @@ func addMark(m Mark) Mark {
 
 	allMarks := getAll()
 	m.ID = calculateNextId(allMarks)
+	m.Created = time.Now().UTC()
 	allMarks = append(allMarks, m)
 	persistMarks(allMarks)
 
