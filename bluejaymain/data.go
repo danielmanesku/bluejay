@@ -39,7 +39,7 @@ func getAll() Marks {
 	return marks
 }
 
-func addMark(m Mark) Mark {
+func addMark(m *Mark) *Mark {
 	calculateNextId := func(marks Marks) int {
 		nextId := 0
 		for _, m := range marks {
@@ -53,24 +53,48 @@ func addMark(m Mark) Mark {
 	allMarks := getAll()
 	m.ID = calculateNextId(allMarks)
 	m.Created = time.Now().UTC()
-	allMarks = append(allMarks, m)
+	allMarks = append(allMarks, *m)
 	persistMarks(allMarks)
 
 	return m
 }
 
+func updateMark(mark *Mark) (*Mark, error) {
+	allMarks := getAll()
+
+	found := false
+	// update the mark if exists in collection
+	for i, m := range allMarks {
+		if m.ID == mark.ID {
+			mark.Modified = time.Now().UTC()
+			mark.Created = m.Created // just in case, don't trust caller's value
+			allMarks[i] = *mark
+			found = true
+		}
+	}
+	if !found {
+		log.WithFields(log.Fields{
+			"id": mark.ID,
+		}).Info("Bookrmark not found")
+		return nil, errors.New("not found")
+	}
+	persistMarks(allMarks)
+
+	return mark, nil
+}
+
 func deleteMark(id int) error {
 	allMarks := getAll()
 
-	removed := false
+	found := false
 	// exclude the mark if exists
 	for i, m := range allMarks {
 		if m.ID == id {
 			allMarks = append(allMarks[:i], allMarks[i+1:]...)
-			removed = true
+			found = true
 		}
 	}
-	if !removed {
+	if !found {
 		log.WithFields(log.Fields{
 			"id": id,
 		}).Info("Bookrmark not found")
